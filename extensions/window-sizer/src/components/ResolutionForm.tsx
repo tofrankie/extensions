@@ -17,7 +17,7 @@ import { log, error as logError } from "../utils/logger";
 interface ResolutionFormProps {
   presetResolutions: Resolution[];
   resolution?: Resolution;
-  onResolutionSaved: (resolution: Resolution, prevResolution?: Resolution) => Promise<void> | void;
+  onResolutionSaved: () => Promise<void> | void;
   onResizeWindow: (width: number, height: number) => Promise<void>;
 }
 
@@ -51,7 +51,7 @@ export function ResolutionForm({
     try {
       // Get current custom resolutions
       const storedResolutions = await LocalStorage.getItem<string>("custom-resolutions");
-      const customResolutions: Resolution[] = storedResolutions ? JSON.parse(storedResolutions) : [];
+      const storedCustomResolutions: Resolution[] = storedResolutions ? JSON.parse(storedResolutions) : [];
 
       // Check if this resolution already exists
       const resolutionTitle = `${parsedWidth}×${parsedHeight}`;
@@ -61,7 +61,7 @@ export function ResolutionForm({
         title: resolutionTitle,
         isCustom: true,
       };
-      const existsInCustom = customResolutions.some((item) => {
+      const existsInCustom = storedCustomResolutions.some((item) => {
         if (
           resolution &&
           item.width === resolution.width &&
@@ -79,7 +79,7 @@ export function ResolutionForm({
         // When editing, replace the old cached entry with the new one
         const updatedResolutions = resolution
           ? [
-              ...customResolutions.filter(
+              ...storedCustomResolutions.filter(
                 (item) =>
                   !(
                     item.width === resolution.width &&
@@ -89,11 +89,31 @@ export function ResolutionForm({
               ),
               nextResolution,
             ]
-          : [...customResolutions, nextResolution];
+          : [...storedCustomResolutions, nextResolution];
 
-        // Save updated custom resolutions
+        const storedStarredResolutions = await LocalStorage.getItem<string>("starred-resolutions");
+        const starredResolutions: Resolution[] = storedStarredResolutions ? JSON.parse(storedStarredResolutions) : [];
+        const updatedStarredResolutions = resolution
+          ? starredResolutions.map((starredResolution) =>
+              starredResolution.width === resolution.width && starredResolution.height === resolution.height
+                ? { ...nextResolution, isStarred: true }
+                : starredResolution,
+            )
+          : starredResolutions;
+
+        // Save updated custom resolutions and keep starred resolutions in sync
         await LocalStorage.setItem("custom-resolutions", JSON.stringify(updatedResolutions));
-        await onResolutionSaved(nextResolution, resolution);
+
+        try {
+          if (resolution) {
+            await LocalStorage.setItem("starred-resolutions", JSON.stringify(updatedStarredResolutions));
+          }
+        } catch (error) {
+          await LocalStorage.setItem("custom-resolutions", JSON.stringify(storedCustomResolutions));
+          throw error;
+        }
+
+        await onResolutionSaved();
 
         return nextResolution;
       }

@@ -2,10 +2,9 @@
 
 ## [Feat] - {PR_MERGE_DATE}
 
-- Show aspect ratio of resolution
+- Add a "Show Aspect Ratios" preference to show resolution aspect ratios
 - Rename `Default Sizes` to `Preset Sizes`
 - Add `Edit Custom Size` action for Custom Size
-- Remove `Already Starred` action
 
 ## [Fixes] - 2026-06-09
 

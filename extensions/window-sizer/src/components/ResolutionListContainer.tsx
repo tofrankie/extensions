@@ -33,8 +33,7 @@ export function ResolutionListContainer({
   onMaximizeWindow,
 }: ResolutionListContainerProps) {
   const { push } = useNavigation();
-  const { starredResolutions, toggleStarResolution, isResolutionStarred, replaceStarredResolution } =
-    useStarredResolutions();
+  const { starredResolutions, toggleStarResolution } = useStarredResolutions();
   const [isContentReady, setIsContentReady] = useState(false);
   const [initialSelectedItemId, setInitialSelectedItemId] = useState<string | undefined>(undefined);
   const [accessorySelectedItemId, setAccessorySelectedItemId] = useState<string | undefined>(undefined);
@@ -90,19 +89,8 @@ export function ResolutionListContainer({
         resolution={resolution}
         onResizeWindow={onResizeWindow}
         presetResolutions={presetResolutions}
-        onResolutionSaved={async (nextResolution, prevResolution) => {
+        onResolutionSaved={async () => {
           onCustomResolutionAdded();
-
-          if (!prevResolution) {
-            return;
-          }
-
-          const wasStarred = await isResolutionStarred(prevResolution);
-          if (!wasStarred) {
-            return;
-          }
-
-          await replaceStarredResolution(prevResolution, nextResolution);
         }}
       />,
     );
